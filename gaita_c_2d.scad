@@ -31,13 +31,29 @@ $fn=50;
 //echo( [(for i = 0 ; i<len(inner_diam);i = i+1) [lenght_from_espigo[i], inner_diam[i]] ] );
 
 //esfera esticada na dimensao Z e cortada em dois
-module encaixe_espigo(){
+module mesa_orig(){
   translate([0,0,-espigo_altura])  
   difference(){
-  scale([0.3,0.3,0.6])
-    sphere(100.0/2, center=true);
+  scale([0.3,0.3,0.4])
+    sphere(100.0/2);
   translate([0,0,15])  
     cube([30,30,30], center=true);
+  }
+}
+
+module mesa(){
+  translate([0,0,-espigo_altura])  
+  difference(){
+  scale([0.3,0.3,0.4])
+    sphere(100.0/2);
+  translate([0,0,15])  
+    cube([30,30,30], center=true);
+
+  translate([0,0,-25])
+  rotate_extrude(convexity=10)
+    translate([35,0,0])
+    circle(r=30);
+
   }
 }
 
@@ -82,7 +98,7 @@ module assemble(){
   translate([0,0,lenght_from_espigo[len(lenght_from_espigo)-1]]){
     difference(){
       union(){
-        encaixe_espigo();
+        mesa();
         //rotate_from_points(lens_outer_2, outer_diam_2 );
         rotate_from_points(lens_outer, outer_diam );
         anilha();
@@ -96,12 +112,20 @@ module assemble(){
   }
 }
 
-module inserts(height, diam, insert_side=5){
+module inserts(height, diam, insert_side=2){
+
+  min_wall=1.9;
+  translate([0, 0, height])  
+  difference(){  
+    cylinder(5,diam/2-min_wall,diam/2-min_wall, center=true);
+    cylinder(5,diam/2-2-min_wall,diam/2-2-min_wall, center=true);
+  }
   
   translate([0, diam/2-1, height])  
   rotate([0,45,0])
-    cube([insert_side, 2, insert_side], center=true);
+    cube([insert_side, 1.9, insert_side], center=true);
 
+  /*
   translate([0, -diam/2+1, height])  
   rotate([0,45,0])
     cube([insert_side, 2, insert_side], center=true);
@@ -113,12 +137,13 @@ module inserts(height, diam, insert_side=5){
   translate([-diam/2+1, 0, height])  
   rotate([0,45, 90])
     cube([insert_side, 2, insert_side], center=true);
-
+*/
 
 }
 
 //corte do ponteiro
-module cut_side1(height, diam){
+module cut_bottom(height, diam){
+
   intersection(){
     assemble();
     union(){
@@ -132,8 +157,9 @@ module cut_side1(height, diam){
 }
 
 //corte do ponteiro segunda metade
-module cut_side2(height, diam){
+module cut_top(height, diam){
   translate([0,0,-height])
+
   intersection(){
     difference(){
       assemble();
@@ -152,22 +178,25 @@ module cut_side2(height, diam){
 total_height=holes_center_from_top[len(holes_center_from_top)-1];
 
 ind= len(holes_center_from_top)-3;
-cut_height= holes_center_from_top[ind];
-cut_diam= holes_cone_outer_diam[ind];
+//cut_height= holes_center_from_top[ind];
+//cut_diam= holes_cone_outer_diam[ind];
 
+cut_height= holes_center_from_top[ind]+10;
+cut_diam= holes_cone_outer_diam[ind]+1;
+echo(cut_height);
 
 //descomentar para visualizar partes
 //        espigo_outside();
-//        encaixe_espigo();
+//        mesa();
 //        cone_exterior();
 //        anilha();
 //        holes();
 //        cone_interior();
 
 //Ver ponteiro inteiro
-assemble();
+//assemble();
 
 //Ponteiro cortado em duas metades para impressora 3D com volume reduzido
-//cut_side1(total_height-cut_height,cut_diam);
-//cut_side2(total_height-cut_height,cut_diam);
+//cut_bottom(total_height-cut_height,cut_diam);
+cut_top(total_height-cut_height,cut_diam);
 
